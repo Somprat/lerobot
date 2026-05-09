@@ -1,0 +1,8 @@
+# Install lerobot (editable) with the extras needed by the scripts in dataset/
+# and to run lerobot-train with SmolVLA.
+#
+#   pip install -r requirements.txt
+#
+# Requires Python >= 3.12.
+
+-e ./lerobot[dataset,smolvla,training]

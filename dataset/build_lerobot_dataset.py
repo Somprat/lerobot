@@ -1,16 +1,8 @@
-"""Build a LeRobot-format dataset from local frames and push it to the Hub.
+"""Convert local frames into a proper LeRobot-format dataset.
 
-Format target: SmolVLA fine-tuning compatible (3 cameras, 6-dim state/action).
-The state/action vectors are random — this is a format/compatibility smoke test,
-not a real teleoperation log.
-
-Run from the project root with the base conda env that has lerobot installed:
-
-    /Users/begenchgurbanov/miniconda3/bin/python3.13 dataset/create_data.py
-
-Pushing to ``SompratPWG/TestLerobot`` requires being logged in to a HF account
-with write access to that namespace (`hf auth login`). To target a different
-namespace, change ``REPO_ID`` below.
+Smoke-test data only: state/action are random — there is no real teleoperation log.
+Reads frames from ``dataset/frames/video[1-4]/`` and writes a LeRobot dataset
+under ``$HF_LEROBOT_HOME/{REPO_ID}`` (default ``~/.cache/huggingface/lerobot``).
 """
 
 from pathlib import Path
@@ -20,7 +12,7 @@ import numpy as np
 
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
-REPO_ID = "Begench02/tritonDroids"
+REPO_ID = "Begench02/TestLerobotSample3cam"
 FPS = 10
 NUM_EPISODES = 4
 STATE_DIM = 6
@@ -32,6 +24,7 @@ CAMERA_KEYS = (
     "observation.images.camera2",
     "observation.images.camera3",
 )
+
 FRAMES_ROOT = Path(__file__).parent / "frames"
 
 
@@ -41,7 +34,7 @@ def natural_sort_key(name: str) -> tuple[int, str]:
 
 
 def main() -> None:
-    features: dict = {
+    features = {
         cam: {
             "dtype": "video",
             "shape": (IMG_H, IMG_W, 3),
@@ -49,15 +42,17 @@ def main() -> None:
         }
         for cam in CAMERA_KEYS
     }
-    features["observation.state"] = {
-        "dtype": "float32",
-        "shape": (STATE_DIM,),
-        "names": [f"s{i}" for i in range(STATE_DIM)],
-    }
-    features["action"] = {
-        "dtype": "float32",
-        "shape": (ACTION_DIM,),
-        "names": [f"a{i}" for i in range(ACTION_DIM)],
+    features |= {
+        "observation.state": {
+            "dtype": "float32",
+            "shape": (STATE_DIM,),
+            "names": [f"s{i}" for i in range(STATE_DIM)],
+        },
+        "action": {
+            "dtype": "float32",
+            "shape": (ACTION_DIM,),
+            "names": [f"a{i}" for i in range(ACTION_DIM)],
+        },
     }
 
     dataset = LeRobotDataset.create(
@@ -92,11 +87,7 @@ def main() -> None:
         print(f"  saved episode {ep}")
 
     dataset.finalize()
-    print(f"\nLocal dataset written to: {dataset.root}")
-
-    print(f"\nPushing to https://huggingface.co/datasets/{REPO_ID}")
-    dataset.push_to_hub(tags=["lerobot", "smolvla", "sample"])
-    print("Push complete.")
+    print(f"\nDone. Dataset written to: {dataset.root}")
 
 
 if __name__ == "__main__":

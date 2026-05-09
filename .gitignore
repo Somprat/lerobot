@@ -1,0 +1,14 @@
+CLAUDE.md
+**/CLAUDE.md
+
+# Training outputs (large; publish to HuggingFace instead)
+outputs/
+**/outputs/
+
+# Python build / cache
+**/__pycache__/
+*.egg-info/
+.cache/
+
+# macOS
+.DS_Store
